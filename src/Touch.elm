@@ -79,7 +79,7 @@ In your update:
 -}
 
 import Html
-import Html.Events exposing (on)
+import Html.Events exposing (on, onWithOptions)
 import Json.Decode as Json exposing (Decoder)
 
 
@@ -251,4 +251,9 @@ onMove tagger =
 -}
 onEnd : (Event -> msg) -> Html.Attribute msg
 onEnd tagger =
-    on "touchend" <| decodeTouch "changedTouches" (Touch End >> tagger)
+    onWithOptions "touchend"
+        { stopPropagation = False
+        , preventDefault = True
+        }
+    <|
+        decodeTouch "changedTouches" (Touch End >> tagger)
