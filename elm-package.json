@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "summary": "Touch events, in Elm",
-  "repository": "https://github.com/ilias/elm-touch-events.git",
+  "repository": "https://github.com/zwilias/elm-touch-events.git",
   "license": "BSD3",
   "source-directories": ["src"],
   "exposed-modules": ["Touch"],
