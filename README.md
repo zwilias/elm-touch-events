@@ -4,4 +4,4 @@
 
 ## License
 
-MIT © [Ilias Van Peer](https://ilias.xyz)
+BSD-3 © [Ilias Van Peer](https://ilias.xyz)

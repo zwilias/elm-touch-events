@@ -1,11 +1,15 @@
 module Touch
     exposing
-        ( Gesture
-        , Touch
+        ( Event
+        , Gesture
         , blanco
         , deltaX
         , deltaY
+        , isDownSwipe
+        , isLeftSwipe
+        , isRightSwipe
         , isTap
+        , isUpSwipe
         , onEnd
         , onMove
         , onStart
@@ -14,20 +18,63 @@ module Touch
 
 {-| Early stages of gesture recognition for touch-events.
 
+This is intended to be used in qualified form.
+
 
 # Hooking it up
 
-@docs onMove, onEnd, onStart, record
+In your model:
+
+    { gesture : Touch.Gesture }
+
+In your init:
+
+    { gesture = Touch.blanco }
+
+In your Msg:
+
+    type Msg
+        = Swipe Touch.Event
+        | SwipeEnd Touch.Event
+
+In your view:
+
+    Html.div
+        [ Touch.onStart Swipe
+        , Touch.onMove Swipe
+        , Touch.onEnd SwipeEnd
+        ]
+        [ Html.text "Swipe me!" ]
+
+In your update:
+
+    Swipe touch ->
+        { model | gesture = Touch.record touch model.gesture }
+
+    SwipeEnd touch ->
+        let
+            gesture : Touch.Gesture
+            gesture =
+                Touch.record touch model.gesture
+
+            -- use inspection functions like `isTap` and `isLeftSwipe`
+        in
+        { model | gesture = Touch.blanco }
 
 
-# For keeping around
+# Events stuff
 
-@docs Gesture, Touch, blanco
+@docs onMove, onEnd, onStart
 
 
-# Getting some info
+# Keep some state around
 
-@docs deltaX, deltaY, isTap
+@docs Gesture, Event, blanco, record
+
+
+# Get yourself some info
+
+@docs deltaX, deltaY, isTap, isUpSwipe, isDownSwipe, isLeftSwipe, isRightSwipe
 
 -}
 
@@ -55,7 +102,7 @@ deltaX : Gesture -> Maybe Float
 deltaX gesture =
     case gesture of
         EndGesture { from, to } ->
-            Just (from.x - to.x)
+            Just (to.x - from.x)
 
         _ ->
             Nothing
@@ -68,10 +115,43 @@ deltaY : Gesture -> Maybe Float
 deltaY gesture =
     case gesture of
         EndGesture { from, to } ->
-            Just (from.y - to.y)
+            Just (to.y - from.y)
 
         _ ->
             Nothing
+
+
+{-| Is this gesture finished and did we move more than `sensitivity` to the right?
+-}
+isRightSwipe : Float -> Gesture -> Bool
+isRightSwipe sensitivity =
+    isSwipeType deltaX (\dX -> dX >= sensitivity)
+
+
+{-| Is this gesture finished and did we move more than `sensitivity` to the left?
+-}
+isLeftSwipe : Float -> Gesture -> Bool
+isLeftSwipe sensitivity =
+    isSwipeType deltaX (\dX -> dX <= -sensitivity)
+
+
+{-| Is this gesture finished and did we move more than `sensitivity` to the bottom?
+-}
+isDownSwipe : Float -> Gesture -> Bool
+isDownSwipe sensitivity =
+    isSwipeType deltaY (\dY -> dY >= sensitivity)
+
+
+{-| Is this gesture finished and did we move more than `sensitivity` to the top?
+-}
+isUpSwipe : Float -> Gesture -> Bool
+isUpSwipe sensitivity =
+    isSwipeType deltaY (\dY -> dY <= -sensitivity)
+
+
+isSwipeType : (Gesture -> Maybe Float) -> (Float -> Bool) -> Gesture -> Bool
+isSwipeType delta predicate =
+    delta >> Maybe.map predicate >> Maybe.withDefault False
 
 
 type alias Coordinate =
@@ -93,9 +173,9 @@ type Gesture
     | EndTap Coordinate
 
 
-{-| A single `Touch` event. Gestures are made up of these, internally.
+{-| A single `Touch.Event`. Gestures are made up of these, internally.
 -}
-type Touch
+type Event
     = Touch EventType Coordinate
 
 
@@ -122,7 +202,7 @@ addToTrail coordinate { from, to, through } =
 
 {-| Our cute little `update`-like function!
 -}
-record : Touch -> Gesture -> Gesture
+record : Event -> Gesture -> Gesture
 record (Touch eventType coordinate) gesture =
     case ( eventType, gesture ) of
         ( Start, _ ) ->
@@ -155,20 +235,20 @@ decodeTouch fieldName tagger =
 
 {-| Record the start of a touch gesture.
 -}
-onStart : (Touch -> msg) -> Html.Attribute msg
+onStart : (Event -> msg) -> Html.Attribute msg
 onStart tagger =
     on "touchstart" <| decodeTouch "touches" (Touch Start >> tagger)
 
 
 {-| Record an ongoing touch gesture.
 -}
-onMove : (Touch -> msg) -> Html.Attribute msg
+onMove : (Event -> msg) -> Html.Attribute msg
 onMove tagger =
     on "touchmove" <| decodeTouch "changedTouches" (Touch Move >> tagger)
 
 
 {-| Record the end of a touch gesture.
 -}
-onEnd : (Touch -> msg) -> Html.Attribute msg
+onEnd : (Event -> msg) -> Html.Attribute msg
 onEnd tagger =
     on "touchend" <| decodeTouch "changedTouches" (Touch End >> tagger)
