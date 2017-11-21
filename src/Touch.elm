@@ -2,6 +2,7 @@ module Touch
     exposing
         ( Event
         , Gesture
+        , Position
         , blanco
         , deltaX
         , deltaY
@@ -10,6 +11,7 @@ module Touch
         , isRightSwipe
         , isTap
         , isUpSwipe
+        , locate
         , onEnd
         , onMove
         , onStart
@@ -74,7 +76,7 @@ In your update:
 
 # Get yourself some info
 
-@docs deltaX, deltaY, isTap, isUpSwipe, isDownSwipe, isLeftSwipe, isRightSwipe
+@docs Position, locate, deltaX, deltaY, isTap, isUpSwipe, isDownSwipe, isLeftSwipe, isRightSwipe
 
 -}
 
@@ -154,12 +156,14 @@ isSwipeType delta predicate =
     delta >> Maybe.map predicate >> Maybe.withDefault False
 
 
-type alias Coordinate =
+{-| A position, similar to the one in the `elm-lang/mouse` package.
+-}
+type alias Position =
     { x : Float, y : Float }
 
 
 type alias Trail =
-    { from : Coordinate, through : List Coordinate, to : Coordinate }
+    { from : Position, through : List Position, to : Position }
 
 
 {-| A `Gesture`! You'll want to keep one of these around in your model and
@@ -167,16 +171,23 @@ update it whenever applicable.
 -}
 type Gesture
     = None
-    | Started Coordinate
+    | Started Position
     | Moved Trail
     | EndGesture Trail
-    | EndTap Coordinate
+    | EndTap Position
 
 
 {-| A single `Touch.Event`. Gestures are made up of these, internally.
 -}
 type Event
-    = Touch EventType Coordinate
+    = Touch EventType Position
+
+
+{-| Useful if you want to know the current position during a stream of events.
+-}
+locate : Event -> Position
+locate (Touch _ position) =
+    position
 
 
 type EventType
@@ -195,7 +206,7 @@ blanco =
     None
 
 
-addToTrail : Coordinate -> Trail -> Trail
+addToTrail : Position -> Trail -> Trail
 addToTrail coordinate { from, to, through } =
     { from = from, through = to :: through, to = coordinate }
 
@@ -224,9 +235,9 @@ record (Touch eventType coordinate) gesture =
             EndTap coordinate
 
 
-decodeTouch : String -> (Coordinate -> msg) -> Decoder msg
+decodeTouch : String -> (Position -> msg) -> Decoder msg
 decodeTouch fieldName tagger =
-    Json.map2 Coordinate
+    Json.map2 Position
         (Json.field "clientX" Json.float)
         (Json.field "clientY" Json.float)
         |> Json.at [ fieldName, "0" ]
