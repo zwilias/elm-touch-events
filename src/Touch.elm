@@ -13,6 +13,7 @@ module Touch
         , isUpSwipe
         , locate
         , onEnd
+        , onEndWithOptions
         , onMove
         , onStart
         , record
@@ -66,7 +67,7 @@ In your update:
 
 # Events stuff
 
-@docs onMove, onEnd, onStart
+@docs onMove, onEnd, onStart, onEndWithOptions
 
 
 # Keep some state around
@@ -267,4 +268,12 @@ onEnd tagger =
         , preventDefault = True
         }
     <|
+        decodeTouch "changedTouches" (Touch End >> tagger)
+
+
+{-| Record the end of a touch gesture.
+-}
+onEndWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
+onEndWithOptions options tagger =
+    onWithOptions "touchend" options <|
         decodeTouch "changedTouches" (Touch End >> tagger)
