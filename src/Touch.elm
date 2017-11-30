@@ -260,6 +260,7 @@ onMove tagger =
 
 
 {-| Record the end of a touch gesture.
+This event has `preventDefault = True` to avoid double event with `onClick` after `onEnd`
 -}
 onEnd : (Event -> msg) -> Html.Attribute msg
 onEnd tagger =
@@ -271,7 +272,7 @@ onEnd tagger =
         decodeTouch "changedTouches" (Touch End >> tagger)
 
 
-{-| Record the end of a touch gesture.
+{-| Record the end of a touch gesture with options.
 -}
 onEndWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
 onEndWithOptions options tagger =
