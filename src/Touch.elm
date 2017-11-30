@@ -82,7 +82,7 @@ In your update:
 -}
 
 import Html
-import Html.Events exposing (on, onWithOptions)
+import Html.Events exposing (on, onWithOptions, defaultOptions)
 import Json.Decode as Json exposing (Decoder)
 
 
@@ -260,16 +260,18 @@ onMove tagger =
 
 
 {-| Record the end of a touch gesture.
-This event has `preventDefault = True` to avoid double event with `onClick` after `onEnd`
+
+**Note**: This sets `preventDefault = True` to avoid double events from occuring
+when the same DOM node also has an `onClick` attribute. Using `preventDefault`
+means that if a `touchend` event happens, the `onClick` handler won't fire.
+
+If you have a case where you need to support a regular `onClick` event nested in
+a node that has `onEnd` on it (for example; a container with swipe support,
+which contains a button from an external package), please see `onEndWithOptions`.
 -}
 onEnd : (Event -> msg) -> Html.Attribute msg
-onEnd tagger =
-    onWithOptions "touchend"
-        { stopPropagation = False
-        , preventDefault = True
-        }
-    <|
-        decodeTouch "changedTouches" (Touch End >> tagger)
+onEnd =
+    onEndWithOptions { defaultOptions | preventDefault = True }
 
 
 {-| Record the end of a touch gesture with options.
