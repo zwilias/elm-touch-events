@@ -14,6 +14,8 @@ module Touch
         , locate
         , onEnd
         , onEndWithOptions
+        , onStartWithOptions
+        , onMoveWithOptions
         , onMove
         , onStart
         , record
@@ -67,7 +69,7 @@ In your update:
 
 # Events stuff
 
-@docs onMove, onEnd, onStart, onEndWithOptions
+@docs onMove, onEnd, onStart, onEndWithOptions, onStartWithOptions, onMoveWithOptions
 
 
 # Keep some state around
@@ -278,3 +280,19 @@ onEndWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
 onEndWithOptions options tagger =
     onWithOptions "touchend" options <|
         decodeTouch "changedTouches" (Touch End >> tagger)
+
+
+{-| Record the start of a touch gesture with options.
+-}
+onStartWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
+onStartWithOptions options tagger =
+    onWithOptions "touchstart" options <|
+        decodeTouch "touches" (Touch Start >> tagger)
+
+
+{-| Record the move during a touch gesture with options.
+-}
+onMoveWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
+onMoveWithOptions options tagger =
+    onWithOptions "touchmove" options <|
+        decodeTouch "changedTouches" (Touch Move >> tagger)
