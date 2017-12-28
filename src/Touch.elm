@@ -124,28 +124,32 @@ deltaY gesture =
             Nothing
 
 
-{-| Is this gesture finished and did we move more than `sensitivity` to the right?
+{-| Is this gesture finished and did we move more than `sensitivity`
+(difference between `touchstart` and `touchend` in px) to the right?
 -}
 isRightSwipe : Float -> Gesture -> Bool
 isRightSwipe sensitivity =
     isSwipeType deltaX (\dX -> dX >= sensitivity)
 
 
-{-| Is this gesture finished and did we move more than `sensitivity` to the left?
+{-| Is this gesture finished and did we move more than `sensitivity`
+(difference between `touchstart` and `touchend` in px) to the left?
 -}
 isLeftSwipe : Float -> Gesture -> Bool
 isLeftSwipe sensitivity =
     isSwipeType deltaX (\dX -> dX <= -sensitivity)
 
 
-{-| Is this gesture finished and did we move more than `sensitivity` to the bottom?
+{-| Is this gesture finished and did we move more than `sensitivity`
+(difference between `touchstart` and `touchend` in px) to the bottom?
 -}
 isDownSwipe : Float -> Gesture -> Bool
 isDownSwipe sensitivity =
     isSwipeType deltaY (\dY -> dY >= sensitivity)
 
 
-{-| Is this gesture finished and did we move more than `sensitivity` to the top?
+{-| Is this gesture finished and did we move more than `sensitivity`
+(difference between `touchstart` and `touchend` in px) to the top?
 -}
 isUpSwipe : Float -> Gesture -> Bool
 isUpSwipe sensitivity =
