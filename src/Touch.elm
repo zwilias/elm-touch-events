@@ -1,23 +1,8 @@
-module Touch
-    exposing
-        ( Event
-        , Gesture
-        , Position
-        , blanco
-        , deltaX
-        , deltaY
-        , isDownSwipe
-        , isLeftSwipe
-        , isRightSwipe
-        , isTap
-        , isUpSwipe
-        , locate
-        , onEnd
-        , onEndWithOptions
-        , onMove
-        , onStart
-        , record
-        )
+module Touch exposing
+    ( onMove, onEnd, onStart
+    , Gesture, Event, blanco, record
+    , Position, locate, deltaX, deltaY, isTap, isUpSwipe, isDownSwipe, isLeftSwipe, isRightSwipe
+    )
 
 {-| Early stages of gesture recognition for touch-events.
 
@@ -28,7 +13,7 @@ This is intended to be used in qualified form.
 
 In your model:
 
-    { gesture : Touch.Gesture }
+    { gesture = Touch.Gesture }
 
 In your init:
 
@@ -82,7 +67,7 @@ In your update:
 -}
 
 import Html
-import Html.Events exposing (on, onWithOptions, defaultOptions)
+import Html.Events exposing (custom, on)
 import Json.Decode as Json exposing (Decoder)
 
 
@@ -249,6 +234,15 @@ decodeTouch fieldName tagger =
         |> Json.map tagger
 
 
+decodeTouchWithOptions : String -> { stopPropagation : Bool, preventDefault : Bool } -> (Position -> msg) -> Decoder { message : msg, preventDefault : Bool, stopPropagation : Bool }
+decodeTouchWithOptions fieldName options tagger =
+    Json.map2 (\x y -> Position x y)
+        (Json.field "clientX" Json.float)
+        (Json.field "clientY" Json.float)
+        |> Json.at [ fieldName, "0" ]
+        |> Json.map (\p -> { message = tagger p, preventDefault = options.preventDefault, stopPropagation = options.stopPropagation })
+
+
 {-| Record the start of a touch gesture.
 -}
 onStart : (Event -> msg) -> Html.Attribute msg
@@ -272,15 +266,16 @@ means that if a `touchend` event happens, the `onClick` handler won't fire.
 If you have a case where you need to support a regular `onClick` event nested in
 a node that has `onEnd` on it (for example; a container with swipe support,
 which contains a button from an external package), please see `onEndWithOptions`.
+
 -}
 onEnd : (Event -> msg) -> Html.Attribute msg
 onEnd =
-    onEndWithOptions { defaultOptions | preventDefault = True }
+    onEndWithOptions { stopPropagation = False, preventDefault = True }
 
 
 {-| Record the end of a touch gesture with options.
 -}
-onEndWithOptions : Html.Events.Options -> (Event -> msg) -> Html.Attribute msg
+onEndWithOptions : { stopPropagation : Bool, preventDefault : Bool } -> (Event -> msg) -> Html.Attribute msg
 onEndWithOptions options tagger =
-    onWithOptions "touchend" options <|
-        decodeTouch "changedTouches" (Touch End >> tagger)
+    custom "touchend" <|
+        decodeTouchWithOptions "changedTouches" options (Touch Move >> tagger)
